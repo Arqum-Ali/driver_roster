@@ -1,0 +1,73 @@
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+__pycache__/
+*.so
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Migrations
+*/migrations/*
+!*/migrations/__init__.py
+
+# Static files
+/static/
+/staticfiles/
+/media/
+
+# Environment variables
+.env
+.env.*
+
+# Ignore virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Ignore macOS-specific files
+.DS_Store
+
+# Ignore system files
+*.swp
+*.swo
+*.swn
+
+# Ignore coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+*.iml
+
+# Ignore pipenv & poetry files
+Pipfile.lock
+poetry.lock
+
+# Ignore docker & CI files
+docker-compose.override.yml
+docker-compose.yml
+*.env
+
+# Ignore compiled code
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Ignore node modules if you use any JS/Frontend
+node_modules/
