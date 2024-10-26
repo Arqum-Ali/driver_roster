@@ -1,6 +1,10 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from .models import *
+from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 def trailers_list(request):
     """Render the trailers list view"""
@@ -21,11 +25,6 @@ def add_trailer(request):
         return JsonResponse({'status': 'error', 'message': 'Invalid trailer registration number.'})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
 # views.py
-from django.http import JsonResponse
-from .models import Vehicle
-from django.http import JsonResponse
-from django.shortcuts import render
-from .models import Vehicle  # Ensure you have the correct import for your Vehicle model
 
 def vehicle_list(request):
     """Render the vehicles list view"""
@@ -46,9 +45,6 @@ def add_vehicle(request):
     
     # Ensure this part of the code is unreachable unless an incorrect method is used
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
-from django.http import JsonResponse
-from django.shortcuts import render
-from .models import Driver
 
 def drivers_list(request):
     """Render the drivers list view."""
@@ -89,8 +85,6 @@ def add_driver(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
 
 
-from django.http import JsonResponse
-from .models import Driver  # Assuming your model is called Driver
 
 def delete_driver(request, id):
     if request.method == 'DELETE':
@@ -125,11 +119,6 @@ def edit_driver(request, id):
     except Driver.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Driver not found'}, status=404)
 
-# views.py
-from django.http import JsonResponse
-from django.shortcuts import render
-from .models import Job
-from datetime import datetime
 
 def jobs_list(request):
     """Render the jobs list view."""
@@ -138,14 +127,12 @@ def jobs_list(request):
     vehicles = Vehicle.objects.all()
     trailers = Trailer.objects.all()
     drivers = Driver.objects.all()
+    drivers_list = [{'id': driver.id, 'name': driver.name, 'has_msic': driver.has_msic, 'has_whitecard': driver.has_white_card} for driver in drivers]
+
+
     rosters = Roster.objects.all()
 
-    # data = {
-    #     'vehicles': list(vehicles.values('id', 'rego_number')),
-    #     'trailers': list(trailers.values('id', 'rego_number')),
-    #     'drivers': list(drivers.values('id', 'name'))
-    # }
-    return render(request, 'job.html', {'jobs': jobs,'vehicles':vehicles,'trailers':trailers,'drivers':drivers,'rosters':rosters})  # Change 'job' to 'jobs'
+    return render(request, 'job.html', {'jobs': jobs,'vehicles':vehicles,'trailers':trailers,'drivers':drivers_list,'rosters':rosters})  # Change 'job' to 'jobs'
 
 def add_job(request):
     """Handle AJAX requests to add a new job."""
@@ -190,10 +177,6 @@ def delete_job(request, id):
         except Job.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Job not found'}, status=404)
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
-from .models import Job  # Adjust the import according to your models
-from datetime import datetime
 
 def edit_job(request, id):
     if request.method == 'POST':
@@ -225,27 +208,6 @@ def edit_job(request, id):
         return JsonResponse({'status': 'success'})
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
-from django.shortcuts import get_object_or_404, redirect
-from django.http import JsonResponse
-from .models import Job, Roster, Vehicle, Driver, Trailer
-
-
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-from .models import Roster  # Ensure your Roster model is imported
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-from datetime import datetime
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-from datetime import datetime
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-from datetime import datetime
 
 @csrf_exempt  # Use cautiously, consider proper CSRF protection
 def add_roster(request):
@@ -268,12 +230,28 @@ def add_roster(request):
 
             # Create a new Roster instance
             print("aaa-----------")
+            print("data['wharfStatus']",data['wharfStatus'])
+            print("data['constructionSite']",data['constructionSite'])
+
             vehicles = Vehicle.objects.get(id=data['vehicleRegos'])
             trailer1 = Trailer.objects.get(id=data['trailerRegos'][0])
-            trailer2 = Trailer.objects.get(id=data['trailerRegos'][1])
-            trailer3 = Trailer.objects.get(id=data['trailerRegos'][2])
-            driver = Driver.objects.get(id=data['driverName'])
+            print("trailer1",trailer1)
+            # print("Trailer.objects.get(id=data['trailerRegos'][1])",Trailer.objects.get(id=data['trailerRegos'][1]))
+            if data['trailerRegos'][1] == '':
+                trailer2 = None
+                print("trailer2",trailer2)
+            else:
+                print("hello1")
+                trailer2=Trailer.objects.get(id=data['trailerRegos'][1])
 
+            if data['trailerRegos'][2] == '':
+                trailer3 = None
+                print("trailer2",trailer3)    
+            else:
+                print("hello1")
+                trailer3=Trailer.objects.get(id=data['trailerRegos'][2])
+       
+            driver = Driver.objects.get(id=data['driverName'])
             roster = Roster.objects.create(
                 job_date=job_date,
                 vehicle=vehicles,
@@ -296,3 +274,75 @@ def add_roster(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+# views.py
+from django.http import JsonResponse
+from .models import Driver
+
+from django.http import JsonResponse
+from .models import Driver  # Make sure to import your Driver model
+
+def get_filtered_drivers(request):
+    if request.method == "GET":
+        # Retrieve query parameters
+        wharfStatus = request.GET.get('wharfStatus')
+        constructionSite = request.GET.get('constructionSite')
+
+        # Convert query parameters to Boolean values
+        wharfStatus = wharfStatus.lower() == 'true' if wharfStatus is not None else False
+        constructionSite = constructionSite.lower() == 'true' if constructionSite is not None else False
+
+        # Print for debugging
+        print(f"Wharf Status: {wharfStatus}, Construction Site: {constructionSite}")
+        if not wharfStatus and not constructionSite:
+            # Fetch drivers excluding those with both has_msic and has_white_card set to False
+            filtered_drivers = Driver.objects.exclude(has_msic=False, has_white_card=False)
+        # Filter drivers based on the received parameters
+        else:
+            filtered_drivers = Driver.objects.filter(has_msic=wharfStatus, has_white_card=constructionSite)
+
+        # Prepare driver data for the response
+        driver_data = [{'id': driver.id, 'name': driver.name} for driver in filtered_drivers]
+
+        return JsonResponse(driver_data, safe=False)
+
+
+import csv
+from django.http import HttpResponse
+from .models import Roster
+
+def export_roster_csv(request):
+    # Create the HTTP response object with the appropriate CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="rosters.csv"'
+
+    # Create a CSV writer
+    writer = csv.writer(response)
+
+    # Write the header row
+    writer.writerow([
+        'Job Date', 'Vehicle Rego Number', 'Driver Name', 
+        'Trailer1 Rego Number', 'Trailer2 Rego Number', 'Trailer3 Rego Number', 
+        'Trailer Type', 'Start Time', 'End Time', 
+        'Client Name', 'Wharf Status', 'Construction Site', 'Notes'
+    ])
+
+    # Fetch all Roster objects and write to the CSV
+    rosters = Roster.objects.all()
+    for roster in rosters:
+        writer.writerow([
+            roster.job_date.strftime('%Y-%m-%d') if roster.job_date else '',
+            roster.vehicle.rego_number if roster.vehicle else '',
+            roster.driver.name if roster.driver else '',
+            roster.trailer1.rego_number if roster.trailer1 else '',
+            roster.trailer2.rego_number if roster.trailer2 else '',
+            roster.trailer3.rego_number if roster.trailer3 else '',
+            roster.trailer_type,
+            roster.start_time.strftime('%H:%M') if roster.start_time else '',
+            roster.end_time.strftime('%H:%M') if roster.end_time else '',
+            roster.client_name,
+            roster.wharf_status,
+            roster.construction_site,
+            roster.notes,
+        ])
+
+    return response
