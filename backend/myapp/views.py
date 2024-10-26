@@ -211,6 +211,10 @@ def edit_job(request, id):
 
 @csrf_exempt  # Use cautiously, consider proper CSRF protection
 def add_roster(request):
+
+
+
+    
     if request.method == 'POST':
         data = json.loads(request.body)
         print("aa--ffffffff", data)
